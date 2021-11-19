@@ -22,6 +22,9 @@
 //graphics
 #include "Graphics/Renderer.h"
 #include "Graphics/Texture.h"
+#include "Graphics/Shader.h"
+#include "Graphics/Program.h"
+#include "Graphics/Material.h"
 
 //systems
 #include "Audio/AudioSystem.h"
