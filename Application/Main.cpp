@@ -6,21 +6,42 @@
 
 #include <iostream>
 
-// vertices
 const float vertices[] =
 {
-	-0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
-	 0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
-	 0.5f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f,
-	-0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 1.0f
+	// front
+	-1.0f, -1.0f,  1.0, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+	 1.0f, -1.0f,  1.0, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+	 1.0f,  1.0f,  1.0, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+	-1.0f,  1.0f,  1.0, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f,
+	// back
+	-1.0f, -1.0f, -1.0, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+	 1.0f, -1.0f, -1.0, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+	 1.0f,  1.0f, -1.0, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
+	-1.0f,  1.0f, -1.0, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f
 };
 
 
 
 const GLuint indices[] =
 {
-	0, 2, 1,
-	0, 3, 2
+	// front
+	0, 1, 2,
+	2, 3, 0,
+	// right
+	1, 5, 6,
+	6, 2, 1,
+	// back
+	7, 6, 5,
+	5, 4, 7,
+	// left
+	4, 0, 3,
+	3, 7, 4,
+	// bottom
+	4, 5, 1,
+	1, 0, 4,
+	// top
+	3, 2, 6,
+	6, 7, 3
 };
 
 int main(int argc, char** argv) {
@@ -40,37 +61,56 @@ int main(int argc, char** argv) {
 	program->Link();
 	program->Use();
 
-	//vertex array
-	GLuint vao;
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
+	////vertex array
+	//GLuint vao;
+	//glGenVertexArrays(1, &vao);
+	//glBindVertexArray(vao);
 
-	//create vertex buffer
-	GLuint vbo;
-	glGenBuffers(1, &vbo);
+	////create vertex buffer
+	//GLuint vbo;
+	//glGenBuffers(1, &vbo);
+	//glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	//glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	//GLuint ebo; //element buffer object
+	//glGenBuffers(1,&ebo);
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-	GLuint ebo; //element buffer object
-	glGenBuffers(1,&ebo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+	////position
+	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 0);
+	//glEnableVertexAttribArray(0);
+	////color
+	//glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+	//glEnableVertexAttribArray(1);
+	////uv
+	//glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	//glEnableVertexAttribArray(2);
 
-	//position
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), 0);
-	glEnableVertexAttribArray(0);
-	//color
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
+	std::shared_ptr<gme::VertexIndexBuffer> vertexBuffer = engine.Get<gme::ResourceSystem>()->Get<gme::VertexIndexBuffer>("vertex_index_buffer");
+	vertexBuffer->CreateVertexBuffer(sizeof(vertices), 8, (void*)vertices);
+	vertexBuffer->CreateIndexBuffer(GL_UNSIGNED_INT, 36, (void*)indices);
+	vertexBuffer->SetAttribute(0, 3, 8 * sizeof(float), 0);
+	vertexBuffer->SetAttribute(1, 3, 8 * sizeof(float), (3 * sizeof(float)));
+	vertexBuffer->SetAttribute(2, 2, 8 * sizeof(float), (6 * sizeof(float)));
+
+	//texture
+	gme::Texture texture;
+	texture.CreateTexture("textures/llama.jpg");
+	texture.Bind();
 
 	//uniform
 	float time = 0;
-	program->SetUniform("scale",time);
+	
+	// matrix uniform
+	glm::mat4 view = glm::lookAt(glm::vec3{ 0, 0, 2 }, glm::vec3{ 0, 0, 0 }, glm::vec3{ 0, 1, 0 });
+	program->SetUniform("view", view);
 
-	glm::vec3 tint{1.0f,1.0f,1.0f};
-	program->SetUniform("tint",tint);
+	glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+	program->SetUniform("projection", projection);
 
+	glm::vec3 translate{0.0f};
+	float angle = 0;
 	bool quit = false;
 	while (!quit) {
 		SDL_Event event;
@@ -92,12 +132,33 @@ int main(int argc, char** argv) {
 		engine.Update();
 
 		time += engine.time.deltaTime;
-		program->SetUniform("scale",std::sin(time));
+		angle += engine.time.deltaTime;
+
+		if (engine.Get<gme::InputSystem>()->GetKeyState(SDL_SCANCODE_A) == gme::InputSystem::eKeyState::Held) {
+			translate.x -= 3.0f * engine.time.deltaTime;
+		}
+		if (engine.Get<gme::InputSystem>()->GetKeyState(SDL_SCANCODE_D) == gme::InputSystem::eKeyState::Held) {
+			translate.x += 3.0f * engine.time.deltaTime;
+		}
+		if (engine.Get<gme::InputSystem>()->GetKeyState(SDL_SCANCODE_W) == gme::InputSystem::eKeyState::Held) {
+			translate.y += 3.0f * engine.time.deltaTime;
+		}
+		if (engine.Get<gme::InputSystem>()->GetKeyState(SDL_SCANCODE_S) == gme::InputSystem::eKeyState::Held) {
+			translate.y -= 3.0f * engine.time.deltaTime;
+		}
+
+		glm::mat4 model{ 1.0f };
+		model = glm::translate(model, translate);
+		model = glm::rotate(model, angle, glm::vec3{ 0, 1, 0 });
+		model = glm::scale(model, glm::vec3{ 0.25f });
+		program->SetUniform("model", model);
+
 
 		engine.Get<gme::Renderer>()->BeginFrame();
 
 		//glDrawArrays(GL_TRIANGLES, 0, 3);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		//glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+		vertexBuffer->Draw(GL_TRIANGLES);
 
 		engine.Get<gme::Renderer>()->EndFrame();
 		
