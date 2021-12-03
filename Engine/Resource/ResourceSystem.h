@@ -18,8 +18,11 @@ namespace gme
 
 		template <typename T>
 		std::shared_ptr<T> Get(const std::string& name, void* data = nullptr);
-		void Add(const std::string& name, std::shared_ptr<Resource> resource);
 
+		template <typename T>
+		std::vector<std::shared_ptr<T>> Get();
+
+		void Add(const std::string& name, std::shared_ptr<Resource> resource);
 	private:
 		std::map<std::string, std::shared_ptr<Resource>> resources;
 	};
@@ -33,13 +36,30 @@ namespace gme
 		}
 		else
 		{
-			std::shared_ptr resource = std::make_shared<T>(); // new Shape
+			std::shared_ptr resource = std::make_shared<T>();
 			resource->Load(string_tolower(name), data);
 			resources[string_tolower(name)] = resource;
 
 			return resource;
 		}
 	}
+
+	template <typename T>
+	inline std::vector<std::shared_ptr<T>> ResourceSystem::Get() {
+		std::vector<std::shared_ptr<T>> result;
+
+		for (auto& element : resources) {
+			// get the value of the map (first = key, second = value)
+			// the value is a shared_ptr, get() the raw pointer and try to cast to type T*
+			if (dynamic_cast<T*>(element.second.get())) {
+				// if it is of type T, add the shared pointer to the vector
+				result.push_back(std::dynamic_pointer_cast<T>(element.second));
+			}
+		}
+
+		return result;
+	}
+
 
 	inline void ResourceSystem::Add(const std::string& name, std::shared_ptr<Resource> resource) {
 		resources[string_tolower(name)] = resource;

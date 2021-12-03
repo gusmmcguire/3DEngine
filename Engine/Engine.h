@@ -1,6 +1,7 @@
 #pragma once
 
 #define REGISTER_CLASS(class) gme::ObjectFactory::Instance().Register<class>(#class);
+#define CREATE_ENGINE_OBJECT(class) gme::ObjectFactory::Instance().Create<gme::class>(#class);
 
 //core
 #include "Core/Utilities.h"
@@ -26,7 +27,6 @@
 #include "Graphics/Program.h"
 #include "Graphics/Material.h"
 #include "Graphics/VertexBuffer.h"
-#include "Graphics/VertexIndexBuffer.h"
 
 //systems
 #include "Audio/AudioSystem.h"
@@ -43,6 +43,11 @@
 //components
 #include "Component/PhysicsComponent.h"
 #include "Component/AudioComponent.h"
+#include "Component/CameraComponent.h"
+#include "Component/MeshComponent.h"
+#include "Component/FreeCameraController.h"
+#include "Component/ModelComponent.h"
+#include "Component/LightComponent.h"
 
 #include <vector>
 #include <memory>

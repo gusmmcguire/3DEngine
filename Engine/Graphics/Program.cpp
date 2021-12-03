@@ -1,4 +1,5 @@
 #include "Program.h"
+#include "Engine.h"
 
 namespace gme {
 	Program::Program() {
@@ -12,8 +13,35 @@ namespace gme {
 		}
 	}
 
-	bool Program::Load(const std::string& name, void* null) {
+	bool Program::Load(const std::string& name, void* data) {
+		auto engine = static_cast<Engine*>(data);
+
+		rapidjson::Document document;
+		bool success = gme::json::Load(name, document);
+		if (!success) {
+			SDL_Log("Could not load shader file (%s).", name.c_str());
+			return false;
+		}
+
+		std::string vertex_shader;
+		JSON_READ(document, vertex_shader);
+		if (!vertex_shader.empty()) {
+			auto vshader = engine->Get<gme::ResourceSystem>()->Get<gme::Shader>(vertex_shader, (void*)GL_VERTEX_SHADER);
+			AddShader(vshader);
+		}
+
+		std::string fragment_shader;
+		JSON_READ(document, fragment_shader);
+		if (!fragment_shader.empty()) {
+			auto fshader = engine->Get < gme::ResourceSystem>()->Get<gme::Shader>(fragment_shader, (void*)GL_FRAGMENT_SHADER);
+			AddShader(fshader);
+		}
+
+		Link();
+		Use();
+
 		return true;
+
 	}
 
 	void Program::AddShader(const std::shared_ptr<Shader>& shader) {
@@ -33,7 +61,7 @@ namespace gme {
 		glGetProgramiv(program, GL_LINK_STATUS, &status);
 		if (status == GL_FALSE) {
 			GLint length = 0;
-			glGetShaderiv(program, GL_INFO_LOG_LENGTH, &length);
+			glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
 
 			if (length > 0) {
 				std::string infoLog(length, ' ');
